@@ -1,0 +1,3 @@
+[submodule "motpred_eval"]
+	path = motpred_eval
+	url = https://github.com/Ceveloper/motpred_eval.git
