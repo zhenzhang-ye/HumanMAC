@@ -13,54 +13,49 @@ def get_log_dir_index(out_dir):
     return log_dir_index
 
 
-def update_config(cfg, args_dict):
+def update_config(cfg, exp_folder):
     """
     update some configuration related to args
         - merge args to cfg
         - dct, idct matrix
         - save path dir
     """
-    for k, v in args_dict.items():
-        setattr(cfg, k, v)
-
     dtype = torch.float32
     torch.set_default_dtype(dtype)
-    cfg.dtype = dtype
+    cfg['dtype'] = dtype
 
-    cfg.dct_m, cfg.idct_m = util.get_dct_matrix(cfg.t_pred + cfg.t_his)
-    cfg.dct_m_all = cfg.dct_m.float().to(cfg.device)
-    cfg.idct_m_all = cfg.idct_m.float().to(cfg.device)
-
-    index = get_log_dir_index(cfg.base_dir)
-    if args_dict['mode'] == ('train' or 'pred' or 'eval'):
-        cfg.cfg_dir = '%s/%s' % (cfg.base_dir, args_dict['cfg'] + index)
+    index = get_log_dir_index(cfg['base_dir'])
+    if cfg['model_mode'] in ['train', 'pred', 'test']:
+        cfg['cfg_dir'] = '%s/%s' % (exp_folder, cfg['model_mode'] + index)
     else:
-        cfg.cfg_dir = '%s/%s' % (cfg.base_dir, args_dict['mode'] + index)
-    os.makedirs(cfg.cfg_dir, exist_ok=True)
-    cfg.model_dir = '%s/models' % cfg.cfg_dir
-    cfg.result_dir = '%s/results' % cfg.cfg_dir
-    cfg.log_dir = '%s/log' % cfg.cfg_dir
-    cfg.tb_dir = '%s/tb' % cfg.cfg_dir
-    cfg.gif_dir = '%s/out' % cfg.cfg_dir
-    os.makedirs(cfg.model_dir, exist_ok=True)
-    os.makedirs(cfg.result_dir, exist_ok=True)
-    os.makedirs(cfg.log_dir, exist_ok=True)
-    os.makedirs(cfg.tb_dir, exist_ok=True)
-    os.makedirs(cfg.gif_dir, exist_ok=True)
-    cfg.model_path = os.path.join(cfg.model_dir)
+        cfg['cfg_dir'] = '%s/%s' % (exp_folder, cfg['model_mode'] + index)
+    os.makedirs(cfg['cfg_dir'], exist_ok=True)
+    cfg['model_dir'] = '%s/models' % cfg['cfg_dir']
+    cfg['result_dir'] = '%s/results' % cfg['cfg_dir']
+    cfg['log_dir'] = '%s/log' % cfg['cfg_dir']
+    cfg['tb_dir'] = '%s/tb' % cfg['cfg_dir']
+    cfg['gif_dir'] = '%s/out' % cfg['cfg_dir']
+    os.makedirs(cfg['model_dir'], exist_ok=True)
+    os.makedirs(cfg['result_dir'], exist_ok=True)
+    os.makedirs(cfg['log_dir'], exist_ok=True)
+    os.makedirs(cfg['tb_dir'], exist_ok=True)
+    os.makedirs(cfg['gif_dir'], exist_ok=True)
+    cfg['model_path'] = os.path.join(cfg['model_dir'])
 
     return cfg
 
 
 class Config:
 
-    def __init__(self, cfg_id, test=False):
+    def __init__(self, cfg, test=False):
+        '''
         self.id = cfg_id
         cfg_name = './cfg/%s.yml' % cfg_id
         if not os.path.exists(cfg_name):
             print("Config file doesn't exist: %s" % cfg_name)
             exit(0)
         cfg = yaml.safe_load(open(cfg_name, 'r'))
+        '''
 
         # create dirs
         self.base_dir = 'inference' if test else 'results'
@@ -68,7 +63,7 @@ class Config:
 
         # common
         self.dataset = cfg.get('dataset', 'h36m')
-        self.batch_size = cfg['batch_size']
+        self.batch_size = cfg['method_batch_size']
         self.normalize_data = cfg.get('normalize_data', False)
         self.t_his = cfg['t_his']
         self.t_pred = cfg['t_pred']
@@ -79,8 +74,6 @@ class Config:
         self.lr = cfg['lr']
 
         self.n_pre = cfg['n_pre']
-        self.multimodal_path = cfg['multimodal_path']
-        self.data_candi_path = cfg['data_candi_path']
 
         self.padding = cfg['padding']
         self.Complete = cfg['Complete']
@@ -101,3 +94,4 @@ class Config:
         # indirect variable
         self.joint_num = 16 if self.dataset == 'h36m' else 14
         self.idx_pad, self.zero_index = generate_pad(self.padding, self.t_his, self.t_pred)
+        self.model_mode = cfg['model_mode']

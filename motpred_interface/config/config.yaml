@@ -1,0 +1,36 @@
+hydra:
+  output_subdir: null  
+  run:  
+    dir: .  
+  job:
+    chdir: False
+
+checkpoint_path: ''
+defaults:
+  - task: hmp
+  - method_specs: HumanMac # motion must go on - ours
+  - dataset: h36m
+  - override hydra/hydra_logging: disabled  
+  - override hydra/job_logging: disabled  
+
+method_name: ${method_specs.method_name}
+dtype: float32
+
+mode: stats # 'vis: visualize results\ngen: generate and store all visualizations for a single batch\nstats: launch numeric evaluation')
+stats_mode: probabilistic 
+batch_size: 512
+multimodal_threshold: 0.5
+metrics_at_cpu: False
+n_gpu: 1
+num_samples: 50
+seed: 0
+dataset_split: test
+# pred_length: None # in the future we may want to change this
+silent: False
+
+obs_length: ${eval:'int(${task.history_sec} * ${dataset.fps})'}
+pred_length:  ${eval:'int(${task.prediction_horizon_sec} * ${dataset.fps})'}
+
+
+
+

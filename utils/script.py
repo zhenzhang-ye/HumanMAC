@@ -22,24 +22,24 @@ def create_model_and_diffusion(cfg):
     create TransLinear model and Diffusion
     """
     model = MotionTransformer(
-        input_feats=3 * cfg.joint_num,  # 3 means x, y, z
-        num_frames=cfg.n_pre,
-        num_layers=cfg.num_layers,
-        num_heads=cfg.num_heads,
-        latent_dim=cfg.latent_dims,
-        dropout=cfg.dropout,
-    ).to(cfg.device)
+        input_feats=3 * cfg['joint_num'],  # 3 means x, y, z
+        num_frames=cfg['n_pre'],
+        num_layers=cfg['num_layers'],
+        num_heads=cfg['num_heads'],
+        latent_dim=cfg['latent_dims'],
+        dropout=cfg['dropout'],
+    ).to(cfg['device'])
     diffusion = Diffusion(
-        noise_steps=cfg.noise_steps,
-        motion_size=(cfg.n_pre, 3 * cfg.joint_num),  # 3 means x, y, z
-        device=cfg.device, padding=cfg.padding,
-        EnableComplete=cfg.Complete,
-        ddim_timesteps=cfg.ddim_timesteps,
-        scheduler=cfg.scheduler,
-        mod_test=cfg.mod_test,
-        dct=cfg.dct_m_all,
-        idct=cfg.idct_m_all,
-        n_pre=cfg.n_pre
+        noise_steps=cfg['noise_steps'],
+        motion_size=(cfg['n_pre'], 3 * cfg['joint_num']),  # 3 means x, y, z
+        device=cfg['device'], padding=cfg['padding'],
+        EnableComplete=cfg['Complete'],
+        ddim_timesteps=cfg['ddim_timesteps'],
+        scheduler=cfg['scheduler'],
+        mod_test=cfg['mod_test'],
+        dct=cfg['dct_m_all'],
+        idct=cfg['idct_m_all'],
+        n_pre=cfg['n_pre']
     )
     return model, diffusion
 
@@ -50,11 +50,11 @@ def dataset_split(cfg):
     dataset_dict has two keys: 'train', 'test' for enumeration in train and validation.
     dataset_multi_test is used to create multi-modal data for metrics.
     """
-    dataset_cls = DatasetH36M if cfg.dataset == 'h36m' else DatasetHumanEva
-    dataset = dataset_cls('train', cfg.t_his, cfg.t_pred, actions='all')
-    dataset_test = dataset_cls('test', cfg.t_his, cfg.t_pred, actions='all')
+    dataset_cls = DatasetH36M if cfg['dataset'] == 'h36m' else DatasetHumanEva
+    dataset = dataset_cls('train', cfg['t_his'], cfg['t_pred'], actions='all')
+    dataset_test = dataset_cls('test', cfg['t_his'], cfg['t_pred'], actions='all')
 
-    dataset_cls_multi = DatasetH36M_multi if cfg.dataset == 'h36m' else DatasetHumanEva_multi
+    dataset_cls_multi = DatasetH36M_multi if cfg['dataset'] == 'h36m' else DatasetHumanEva_multi
     dataset_multi_test = dataset_cls_multi('test', cfg.t_his, cfg.t_pred,
                                            multimodal_path=cfg.multimodal_path,
                                            data_candi_path=cfg.data_candi_path)
@@ -258,15 +258,15 @@ def sample_preprocessing(traj, cfg, mode):
     elif mode == 'metrics':
         n = traj.shape[0]
 
-        mask = torch.zeros([n, cfg.t_his + cfg.t_pred, traj.shape[-1]]).to(cfg.device)
-        for i in range(0, cfg.t_his):
+        mask = torch.zeros([n, cfg['t_his'] + cfg['t_pred'], traj.shape[-1]]).to(cfg['device'])
+        for i in range(0, cfg['t_his']):
             mask[:, i, :] = 1
 
-        traj_pad = padding_traj(traj, cfg.padding, cfg.idx_pad, cfg.zero_index)
+        traj_pad = padding_traj(traj, cfg['padding'], cfg['idx_pad'], cfg['zero_index'])
 
-        traj_dct = torch.matmul(cfg.dct_m_all[:cfg.n_pre], traj_pad)
+        traj_dct = torch.matmul(cfg['dct_m_all'][:cfg['n_pre']], traj_pad)
         traj_dct_mod = copy.deepcopy(traj_dct)
-        if np.random.random() > cfg.mod_test:
+        if np.random.random() > cfg['mod_test']:
             traj_dct_mod = None
 
         return {'mask': mask,
