@@ -18,10 +18,9 @@ from motpred_eval.motpred.metrics.multimodal import MetricStorer
 from motpred_eval.motpred.utils.config import merge_cfg
 from motpred_eval.motpred.eval_utils import get_stats_funcs, store_results_for_multiple_diffusion_steps, get_cmd_storer, prepare_eval_dataset
 
-os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8" # for deteministic pytorch output
-
 NDEBUG = False
 USE_HYDRA = True
+os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
 def get_steps_to_evaluate(diffusion_stride, diffusion_steps):
     if diffusion_stride != -1:
@@ -43,7 +42,7 @@ def compute_metrics(dataset_split, store_folder, batch_size, multimodal_threshol
     if store_folder is not None:
         os.makedirs(store_folder, exist_ok=True)
     dataset = set_updataset(config, data_loader_name)    
-    data_loader, dataset = prepare_eval_dataset(config, data_loader_name=data_loader_name, drop_last=False, num_workers=0, batch_size=batch_size, dataset=dataset)
+    data_loader, dataset = prepare_eval_dataset(config, data_loader_name=data_loader_name, drop_last=False, num_workers=0, batch_size=batch_size, dataset=dataset, stats_mode=stats_mode)
     model, device = prepare_model(config, dataset.skeleton)
     stats_func = get_stats_funcs(stats_mode, **config)
     # for non diffusion methods, steps_to_evaluate = [1]
@@ -52,7 +51,11 @@ def compute_metrics(dataset_split, store_folder, batch_size, multimodal_threshol
     print('Computing metrics at ', 'cpu.' if metrics_at_cpu else 'gpu.')
     
     def preprocess(engine: Engine):
-        engine.state.batch =  [t.to(device) if i<2 else t for i, t in enumerate(engine.state.batch)]
+        def mmgt_to_device(extradict):
+            if 'mm_gt' in extradict:
+                extradict['mm_gt'] = [mmgt.to(device) for mmgt in extradict['mm_gt']]
+            return extradict
+        engine.state.batch =  [t.to(device) if i<2 else mmgt_to_device(t) for i, t in enumerate(engine.state.batch)]
         
     def set_epoch_seed(engine: Engine):
         set_seed(0)
@@ -75,14 +78,14 @@ def compute_metrics(dataset_split, store_folder, batch_size, multimodal_threshol
         """
         with torch.no_grad():
             data, target, extra = batch
-            pred_dict = get_prediction(data, model, num_samples=num_samples, steps=steps_to_evaluate, config=config) # [batch_size, n_samples, seq_length, num_joints, features]
-            target, pred, lat_pred = process_evaluation_pair(dataset, target=target, pred_dict=pred_dict)
+            pred_dict = get_prediction(data, model, num_samples=num_samples, extra=extra, config=config) # [batch_size, n_samples, seq_length, num_joints, features]
+            target, pred, lat_pred, mm_gt = process_evaluation_pair(dataset, target=target, pred_dict=pred_dict)
             if metrics_at_cpu:
                 pred = pred.detach().cpu()
                 target = target.detach().cpu()
                 lat_pred = lat_pred.detach().cpu()
             return {'pred':pred, 'target':target, 'lat_pred':lat_pred, 
-                    'extra':extra, 'limbseq': dataset.skeleton.limbseq}
+                    'extra':extra, 'limbseq': dataset.skeleton.limbseq, 'mm_gt': mm_gt}
     
     def extract_step(xdict, funct, step=0):
         assert step == 0, "Turned off. Only interesting to look intermediate diffusion outputs for generic diffusion methods. Output of method has to match. [batch, n_samples, n_diffusion_steps, pred_length, njoints, 3]"

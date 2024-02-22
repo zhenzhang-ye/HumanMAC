@@ -2,18 +2,14 @@ import numpy as np
 import os
 import torch
 
-from motpred.dataset import FreeManDataset, H36MDataset 
+from motpred_eval.motpred.dataset import FreeManDataset, H36MDataset 
 #skeleton import FreeManSkeleton
-from motpred.dataset.base import MotionDataset
+from motpred_eval.motpred.dataset.base import MotionDataset
+from motpred_eval.motpred.dataset import create_skeleton
 
 class BelFusionDataset(MotionDataset):
         
     def recover_landmarks(data, rrr=True, fill_root=False):
-        # if self.normalize_data:
-        #     data = self.denormalize(data)
-        # data := (BatchSize, SegmentLength, NumPeople, Landmarks, Dimensions)
-        # or data := (BatchSize, NumSamples, DiffusionSteps, SegmentLength, NumPeople, Landmarks, Dimensions)
-        # the idea is that it does not matter how many dimensions are before NumPeople, Landmarks, Dimension => always working right
         if rrr:
             assert data.shape[-2] == 17 or (data.shape[-2] == 16 and fill_root), "Root was dropped, so original landmarks can not be recovered"
             if data.shape[-2] == 16 and fill_root:
@@ -49,9 +45,9 @@ class BelFusionFreeManDataset(BelFusionDataset, FreeManDataset):
     def __init__(self, **kwargs):
         super().__init__(**kwargs) 
         
-class BelFusionH36MDataset(BelFusionDataset, H36MDataset):
-    def __init__(self, mode='eval', t_his=25, t_pred=100, actions='all', use_vel=False):
-        self.use_vel = use_vel
-        super().__init__(**kwargs) 
-        if use_vel:
-            self.traj_dim += 3
+class HumanMacH36MDataset(H36MDataset):
+    def __init__(self, config, data_loader_name):
+        skeleton = create_skeleton(**config)
+        split = data_loader_name.split("_")[-1] if 'eval' not in data_loader_name else data_loader_name.split("_")[-2]
+        subjects = config[data_loader_name]['subjects']
+        super().__init__(config[data_loader_name]['subjects'], skeleton, **(config[data_loader_name]))

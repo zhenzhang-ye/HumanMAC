@@ -7,6 +7,7 @@ from utils.script import create_model_and_diffusion
 from config import Config, update_config
 from utils.script import dataset_split, sample_preprocessing
 from utils.util import get_dct_matrix
+from motpred_interface.motpred_dataset_humanmac import HumanMacH36MDataset
 
 
 # improt what you need
@@ -21,6 +22,8 @@ def set_updataset(config, data_loader_name):
     Impleent this function only if the baseline method requires a specific dataloader or a specific skeleton.
     Otherwise we use a dummy lambda that returns None
     """  
+    #dataset = HumanMacH36MDataset(config, data_loader_name)
+    #return dataset
     return None
 
 
@@ -72,26 +75,29 @@ def prepare_model(config, skeleton, silent=False, **kwargs):
 
 
 
-def get_prediction(obs, model, sample_num=50, config=None, **kwargs):
+def get_prediction(obs, model, num_samples=50, extra=None, config=None, **kwargs):
     """
     Generate sample_num predictions from model and input obs.
     return a dict or anything that will be used by process_evaluation_pair
     """
+    pred = torch.zeros(obs.shape[0], num_samples, config['t_pred'], obs.shape[2], 3).to(obs.device)
     obs = obs.reshape(obs.shape[0], obs.shape[1], -1)
     obs = torch.concat([obs, torch.zeros(obs.shape[0], config['t_pred'], obs.shape[2]).to(obs.device)], dim=1)
     model, diffusion = model
-    mode_dict, traj_dct, traj_dct_cond = sample_preprocessing(
-            obs, config, mode='metrics')
-    sampled_motion = diffusion.sample_ddim(model,
-                                        traj_dct,
-                                        traj_dct_cond,
-                                        mode_dict)
+    for i in range(num_samples):
+        mode_dict, traj_dct, traj_dct_cond = sample_preprocessing(
+                obs, config, mode='metrics')
+        sampled_motion = diffusion.sample_ddim(model,
+                                            traj_dct,
+                                            traj_dct_cond,
+                                            mode_dict)
 
-    traj_est = torch.matmul(config['idct_m_all'][:, :config['n_pre']], sampled_motion)
-    traj_est = traj_est[:, None, ...]
-    traj_est = traj_est.reshape(traj_est.shape[0], traj_est.shape[1], traj_est.shape[2], -1, 3)
-    traj_est = traj_est[:, :, config['t_his']:, ...]
-    return {'lat_pred': traj_est, 'pred': traj_est}
+        traj_est = torch.matmul(config['idct_m_all'][:, :config['n_pre']], sampled_motion)
+        traj_est = traj_est.reshape(traj_est.shape[0], traj_est.shape[1], -1, 3)
+        traj_est = traj_est[:, config['t_his']:, ...]
+        pred[:, i, ...] = traj_est
+    mm_gt = extra['mm_gt'] if 'mm_gt' in extra else None
+    return {"lat_pred": torch.zeros_like(pred), "pred": pred, 'mm_gt': mm_gt}
 
 
 def process_evaluation_pair(dataset, target, pred_dict):
@@ -99,10 +105,10 @@ def process_evaluation_pair(dataset, target, pred_dict):
     Process the target and the prediction and return them in the right format for metrics computation
     """
     ...
-    pred, lat_pred = pred_dict['pred'], pred_dict['lat_pred'] # example
+    pred, lat_pred, mm_gt = pred_dict['pred'], pred_dict['lat_pred'], pred_dict['mm_gt']# example
     batch_size, n_samples, seq_length, num_joints, features = pred.shape
     # batch_size, n_samples, n_diffusion_steps, seq_length, num_joints, features = pred.shape
     assert features == 3 and list(target.shape) == [batch_size, seq_length, num_joints, features]
-    return target, pred, lat_pred
+    return target, pred, lat_pred, mm_gt
     
     
