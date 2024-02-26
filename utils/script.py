@@ -105,8 +105,8 @@ def display_exp_setting(logger, cfg):
     log the current experiment settings.
     """
     logger.info('=' * 80)
-    log_dict = cfg.__dict__.copy()
-    for key in list(log_dict):
+    log_dict = cfg.copy()
+    for key in cfg.keys():
         if 'dir' in key or 'path' in key or 'dct' in key:
             del log_dict[key]
     del log_dict['zero_index']
@@ -142,24 +142,24 @@ def sample_preprocessing(traj, cfg, mode):
         joint_fix_lb = fix_list[index][0] * 3
         joint_fix_ub = fix_list[index][-1] * 3 + 3
 
-        traj_fix = traj[:, cfg.idx_pad, :]
+        traj_fix = traj[:, cfg['idx_pad'], :]
         traj_fix[:, :, joint_fix_lb:joint_fix_ub] = traj[:, :, joint_fix_lb:joint_fix_ub]
 
-        n = cfg.vis_col
+        n = cfg['vis_col']
         traj = traj.repeat(n, 1, 1)
 
-        mask = torch.zeros([n, cfg.t_his + cfg.t_pred, traj.shape[-1]]).to(cfg.device)
-        for i in range(0, cfg.t_his):
+        mask = torch.zeros([n, cfg['t_his'] + cfg['t_pred'], traj.shape[-1]]).to(cfg['device'])
+        for i in range(0, cfg['t_his']):
             mask[:, i, :] = 1
 
         mask_fix = copy.deepcopy(mask)
         mask_fix[:, :, joint_fix_lb:joint_fix_ub] = 1
 
-        traj_pad = padding_traj(traj, cfg.padding, cfg.idx_pad, cfg.zero_index)
+        traj_pad = padding_traj(traj, cfg['padding'], cfg['idx_pad'], cfg['zero_index'])
 
-        traj_dct = torch.matmul(cfg.dct_m_all[:cfg.n_pre], traj_pad)
+        traj_dct = torch.matmul(cfg.dct_m_all[:cfg['n_pre']], traj_pad)
         traj_dct_mod = copy.deepcopy(traj_dct)
-        if np.random.random() > cfg.mod_test:
+        if np.random.random() > cfg['mod_test']:
             traj_dct_mod = None
 
         return {'traj_fix': traj_fix,

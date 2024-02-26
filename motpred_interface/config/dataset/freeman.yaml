@@ -1,14 +1,24 @@
 fps: 30
 dataset_type: FreeManDataset
 dataset_name: "freeman"
-precomputed_folder: "./datasets/auxiliar/FreeMan/${task.task_name}/"
-annotations_folder: "./datasets/annotations/FreeMan/${task.task_name}/"
+precomputed_folder: "motpred_eval/datasets/auxiliar/FreeMan/${task.task_name}/"
+annotations_folder: "motpred_eval/datasets/annotations/FreeMan/${task.task_name}/"
 dtype: float32
+
+data_loader_train:
+    stride: 10
+    augmentation: 5
+    shuffle: True
+    actions: "all"
+    da_mirroring: 0.5
+    da_rotations: 1.0
+    drop_last: True
+    if_load_mmgt: False
 
 data_loader_valid:
     shuffle: False
     # annotations_folder: "./datasets/FreeMan"
-    segments_path: "./datasets/annotations/FreeMan/${task.task_name}/segments_${task.history_sec}s-${task.prediction_horizon_sec}s_valid.csv"
+    segments_path: "motpred_eval/datasets/annotations/FreeMan/${task.task_name}/segments_${task.history_sec}s-${task.prediction_horizon_sec}s_valid.csv"
     # split: "valid"
     actions: "all"
     drop_last: False
@@ -17,7 +27,7 @@ data_loader_valid:
 data_loader_test:
     shuffle: False
     # annotations_folder: "./datasets/FreeMan"
-    segments_path: "./datasets/annotations/FreeMan/${task.task_name}/segments_${task.history_sec}s-${task.prediction_horizon_sec}s_test.csv"
+    segments_path: "motpred_eval/datasets/annotations/FreeMan/${task.task_name}/segments_${task.history_sec}s-${task.prediction_horizon_sec}s_test.csv"
     # split: "test"
     actions: "all"
     drop_last: False

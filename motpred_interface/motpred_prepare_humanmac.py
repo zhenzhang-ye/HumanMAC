@@ -7,7 +7,9 @@ from utils.script import create_model_and_diffusion
 from config import Config, update_config
 from utils.script import dataset_split, sample_preprocessing
 from utils.util import get_dct_matrix
-from motpred_interface.motpred_dataset_humanmac import HumanMacH36MDataset
+from motpred_eval.motpred.dataset import create_skeleton
+from motpred_eval.motpred.utils.config import init_obj
+from motpred_interface import motpred_dataset_humanmac as dataset_type
 
 
 # improt what you need
@@ -22,9 +24,23 @@ def set_updataset(config, data_loader_name):
     Impleent this function only if the baseline method requires a specific dataloader or a specific skeleton.
     Otherwise we use a dummy lambda that returns None
     """  
-    #dataset = HumanMacH36MDataset(config, data_loader_name)
-    #return dataset
-    return None
+    skeleton = create_skeleton(**config)
+    if 'HumanMac' not in config["dataset_type"]:
+        config["dataset_type"] = "HumanMac" + config["dataset_type"]
+    split = (
+        data_loader_name.split("_")[-1]
+        if "eval" not in data_loader_name
+        else data_loader_name.split("_")[-2]
+    )
+    dataset = init_obj(
+        config,
+        "dataset_type",
+        dataset_type,
+        split=split,
+        skeleton=skeleton,
+        **(config[data_loader_name]),
+    )
+    return dataset
 
 
 def load_model_config_exp(checkpoint_path, cfg):

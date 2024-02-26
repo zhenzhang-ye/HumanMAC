@@ -24,7 +24,7 @@ def update_config(cfg, exp_folder):
     torch.set_default_dtype(dtype)
     cfg['dtype'] = dtype
 
-    index = get_log_dir_index(cfg['base_dir'])
+    index = get_log_dir_index(exp_folder)
     if cfg['model_mode'] in ['train', 'pred', 'test']:
         cfg['cfg_dir'] = '%s/%s' % (exp_folder, cfg['model_mode'] + index)
     else:
@@ -92,6 +92,9 @@ class Config:
         self.dct_norm_enable = cfg['dct_norm_enable']
 
         # indirect variable
-        self.joint_num = 16 if self.dataset == 'h36m' else 14
+        if self.dataset == 'h36m':
+            self.joint_num = 16
+        elif self.dataset == 'freeman':
+            self.joint_num = 17
         self.idx_pad, self.zero_index = generate_pad(self.padding, self.t_his, self.t_pred)
         self.model_mode = cfg['model_mode']

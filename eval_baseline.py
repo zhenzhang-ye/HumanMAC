@@ -186,7 +186,7 @@ def main(checkpoint_path, method_name='mmugoon', dataset_split='valid', mode='st
     set_seed(seed)
     
     # build the config/checkpoint path
-    if 'baseline' in method_name.lower():
+    if 'humanmac' in method_name.lower():
         checkpoint_path = f"./output/baselines/{cfg['task_name']}/{method_name.lower().replace('baseline', '')}/{cfg['dataset_name']}"
     else:
         assert ".pt" in checkpoint_path, "Path should point to model save"

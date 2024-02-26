@@ -22,7 +22,9 @@ def pose_generator(data_set, model_select, diffusion, cfg, mode=None,
             elif mode == 'pred':
                 data = data_set.sample_iter_action(action, cfg.dataset)
             elif mode == 'gif' or 'fix' in mode:
-                data = data_set.sample()
+                for obs in data_set:
+                    data = torch.cat([obs[0], obs[1]], dim=1)
+                #data = data_set.sample()
             elif mode == 'zero_shot':
                 data = data_set[np.random.randint(0, data_set.shape[0])].copy()
                 data = np.expand_dims(data, axis=0)
@@ -30,9 +32,9 @@ def pose_generator(data_set, model_select, diffusion, cfg, mode=None,
                 raise NotImplementedError(f"unknown pose generator mode: {mode}")
 
             # gt
-            gt = data[0].copy()
-            gt[:, :1, :] = 0
-            data[:, :, :1, :] = 0
+            gt = data[1].clone()
+            #gt[:, :1, :] = 0
+            #data[:, :, :1, :] = 0
 
             if mode == 'switch':
                 poses = {}
@@ -44,10 +46,11 @@ def pose_generator(data_set, model_select, diffusion, cfg, mode=None,
                 else:
                     poses[f'HumanMAC_{draw_order_indicator + 1}'] = gt
                     poses[f'HumanMAC_{draw_order_indicator + 2}'] = gt
-                gt = np.expand_dims(gt, axis=0)
-                traj_np = gt[..., 1:, :].reshape([gt.shape[0], cfg.t_his + cfg.t_pred, -1])
+                #gt = np.expand_dims(gt, axis=0)
+                gt = gt[None, ...]
+                traj = gt[..., 1:, :].reshape([gt.shape[0], gt.shape[1], -1])
 
-            traj = tensor(traj_np, device=cfg.device, dtype=cfg.dtype)
+            #traj = tensor(traj_np, device=cfg.device, dtype=cfg.dtype)
 
             mode_dict, traj_dct, traj_dct_mod = sample_preprocessing(traj, cfg, mode=mode)
             sampled_motion = diffusion.sample_ddim(model_select,

@@ -5,11 +5,11 @@ hydra:
   job:
     chdir: False
 
-checkpoint_path: ''
+checkpoint_path: 'output'
 defaults:
   - task: hmp
   - method_specs: HumanMac # motion must go on - ours
-  - dataset: h36m
+  - dataset: freeman
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled  
 
@@ -24,7 +24,7 @@ metrics_at_cpu: False
 n_gpu: 1
 num_samples: 50
 seed: 0
-dataset_split: test
+dataset_split: train
 # pred_length: None # in the future we may want to change this
 silent: False
 

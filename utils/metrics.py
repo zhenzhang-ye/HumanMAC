@@ -5,7 +5,7 @@ import torch
 """metrics"""
 
 
-def compute_all_metrics(pred, gt, gt_multi):
+def compute_all_metrics(pred, gt):
     """
     calculate all metrics
 
@@ -17,29 +17,24 @@ def compute_all_metrics(pred, gt, gt_multi):
     Returns:
         diversity, ade, fde, mmade, mmfde
     """
-    if pred.shape[0] == 1:
-        diversity = 0.0
-    dist_diverse = torch.pdist(pred.reshape(pred.shape[0], -1))
-    diversity = dist_diverse.mean()
+    #if pred.shape[0] == 1:
+    diversity = 0.0
+    #dist_diverse = torch.pdist(pred.reshape(pred.shape[0], -1))
+    #diversity = dist_diverse.mean()
 
-    gt_multi = torch.from_numpy(gt_multi).to('cuda')
-    gt_multi_gt = torch.cat([gt_multi, gt], dim=0)
+    #gt_multi = torch.from_numpy(gt_multi).to('cuda')
+    #gt_multi_gt = torch.cat([gt_multi, gt], dim=0)
 
-    gt_multi_gt = gt_multi_gt[None, ...]
-    pred = pred[:, None, ...]
+    #gt_multi_gt = gt_multi_gt[None, ...]
+    gt = gt.reshape(gt.shape[0], gt.shape[1], -1)
 
-    diff_multi = pred - gt_multi_gt
-    dist = torch.linalg.norm(diff_multi, dim=3)
+    diff_multi = pred - gt
+    dist = torch.linalg.norm(diff_multi, dim=2)
     # we can reuse 'dist' to optimize metrics calculation
 
-    mmfde, _ = dist[:, :-1, -1].min(dim=0)
-    mmfde = mmfde.mean()
-    mmade, _ = dist[:, :-1].mean(dim=2).min(dim=0)
-    mmade = mmade.mean()
-
-    ade, _ = dist[:, -1].mean(dim=1).min(dim=0)
-    fde, _ = dist[:, -1, -1].min(dim=0)
+    ade = dist.mean(dim=1)
+    fde = dist[:, -1]
     ade = ade.mean()
     fde = fde.mean()
 
-    return diversity, ade, fde, mmade, mmfde
+    return diversity, ade, fde

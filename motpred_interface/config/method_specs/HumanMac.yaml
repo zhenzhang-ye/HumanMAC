@@ -1,6 +1,6 @@
 hip_mode: vanilla
-method_name: HumanMacbaseline
-ckpt_path: 'checkpoints/h36m_ckpt.pt'
+method_name: HumanMac
+ckpt_path: 'checkpoints'
 dataset: ${dataset.dataset_name}
 seed: 0
 method_batch_size: ${batch_size}
@@ -26,10 +26,13 @@ dct_norm_enable: False
 multimodal_threshold: 0.5
 multimodal_th_high: 0.1
 gamma: 0.9
-save_model_interval: 10
+save_model_interval: 100
 save_gif_interval: 10
 ema: True
 vis_switch_num: 10
 vis_col: 5
 vis_row: 3
 n_pre: 20
+multi_modal: True
+milestone: [75, 150, 225, 275, 350, 450]
+save_metrics_interval: 100

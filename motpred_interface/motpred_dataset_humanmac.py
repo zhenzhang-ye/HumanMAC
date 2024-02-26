@@ -7,7 +7,7 @@ from motpred_eval.motpred.dataset import FreeManDataset, H36MDataset
 from motpred_eval.motpred.dataset.base import MotionDataset
 from motpred_eval.motpred.dataset import create_skeleton
 
-class BelFusionDataset(MotionDataset):
+class HumanMacDataset(MotionDataset):
         
     def recover_landmarks(data, rrr=True, fill_root=False):
         if rrr:
@@ -29,8 +29,16 @@ class BelFusionDataset(MotionDataset):
         seq[:, 1:] -= seq[:, :1] # we make them root-relative (root-> joint at first position)
         if self.use_vel:
             seq = np.concatenate((seq, v), axis=1) # shape -> 17+1 (vel only from root joint)
+        return seq
 
+    def get_segment_from_dataset(self, idx):
+        obs, pred, extra = super(HumanMacDataset, self).get_segment_from_dataset(idx) 
+        data = np.concatenate([obs, pred], axis=-3)
+        data = self.preprocess_kpts(data) # Note our Vanilaa Skeleton already centers the keypoints!!
+        obs, pred = data[..., :obs.shape[-3], :, :], data[..., obs.shape[-3]:, :, :]
+        return obs, pred, extra
 
+    '''
     def __getitem__(self, idx):
         obs, pred, extra = super().__getitem__(idx)
         data = self.skeleton.tranform_to_input_space(torch.cat([torch.from_numpy(obs), torch.from_numpy(pred)], dim=-3))
@@ -39,15 +47,14 @@ class BelFusionDataset(MotionDataset):
         obs, pred, extra = self.data_augmentation(obs, pred, extra)        
 
         return obs, pred, extra
+    '''
 
 
-class BelFusionFreeManDataset(BelFusionDataset, FreeManDataset):
+class HumanMacFreeManDataset(HumanMacDataset, FreeManDataset):
     def __init__(self, **kwargs):
         super().__init__(**kwargs) 
         
-class HumanMacH36MDataset(H36MDataset):
-    def __init__(self, config, data_loader_name):
-        skeleton = create_skeleton(**config)
-        split = data_loader_name.split("_")[-1] if 'eval' not in data_loader_name else data_loader_name.split("_")[-2]
-        subjects = config[data_loader_name]['subjects']
-        super().__init__(config[data_loader_name]['subjects'], skeleton, **(config[data_loader_name]))
+class HumanMacH36MDataset(HumanMacDataset, H36MDataset):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.name = "zhenzhang HumanMac"
