@@ -31,20 +31,30 @@ def main_hydra(cfg: DictConfig):
             cfg.pop(subconf)
     train(cfg)  
 
+def create_train_dataset(batch_size, data_loader_name, num_workers, shuffle=False, drop_last=False, **config):
+    from motpred_eval.motpred.dataset import custom_collate_for_mmgt
+    from torch.utils.data import DataLoader
+    dataset = set_updataset(config, data_loader_name)
+    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, pin_memory= True,
+                                num_workers=num_workers, drop_last=drop_last, collate_fn=custom_collate_for_mmgt)     
+    return data_loader, dataset
+
 def train(cfg):
     cfg_orig, exp_folder = load_model_config_exp(cfg['checkpoint_path'], cfg)
     cfg = merge_cfg(cfg, cfg_orig)
     cfg = merge_cfg(cfg, cfg['method_specs'])
 
     data_loader_name = "data_loader_train"
-    dataset = set_updataset(cfg, data_loader_name)
     valid_loader_name = "data_loader_valid"
+    data_loader, dataset = create_train_dataset(batch_size=cfg['batch_size'], data_loader_name=data_loader_name, num_workers=0, 
+                                                 shuffle=True, drop_last=False, **cfg)
+    # data_loader, dataset = prepare_eval_dataset(cfg, 
+    #                                             data_loader_name=data_loader_name, 
+    #                                             drop_last=False, num_workers=0, 
+    #                                             batch_size=cfg['batch_size'], dataset=dataset, 
+    #                                             stats_mode='deterministic')
+    # prepare_eval_dataset() switches off data augmentation during training and also changes how segments are sampled from sequences. If we want to keept it, we need to use create_train_dataset
     validset = set_updataset(cfg, valid_loader_name)
-    data_loader, dataset = prepare_eval_dataset(cfg, 
-                                                 data_loader_name=data_loader_name, 
-                                                 drop_last=False, num_workers=0, 
-                                                 batch_size=cfg['batch_size'], dataset=dataset, 
-                                                 stats_mode='deterministic')
     valid_loader, validset = prepare_eval_dataset(cfg,
                                                   data_loader_name=valid_loader_name, 
                                                   drop_last=False, num_workers=0, 

@@ -1,4 +1,4 @@
-hip_mode: vanilla
+skeleton_type: "SkeletonCenterPoseAlignSeqStart" # 
 method_name: HumanMac
 ckpt_path: 'checkpoints'
 dataset: ${dataset.dataset_name}

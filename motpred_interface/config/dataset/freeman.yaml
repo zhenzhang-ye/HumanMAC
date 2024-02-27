@@ -12,7 +12,7 @@ data_loader_train:
     actions: "all"
     da_mirroring: 0.5
     da_rotations: 1.0
-    drop_last: True
+    drop_last: False
     if_load_mmgt: False
 
 data_loader_valid:

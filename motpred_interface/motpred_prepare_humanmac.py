@@ -123,6 +123,9 @@ def process_evaluation_pair(dataset, target, pred_dict):
     ...
     pred, lat_pred, mm_gt = pred_dict['pred'], pred_dict['lat_pred'], pred_dict['mm_gt']# example
     batch_size, n_samples, seq_length, num_joints, features = pred.shape
+    target = dataset.skeleton.transform_to_metric_space(target)
+    pred = dataset.skeleton.transform_to_metric_space(pred)
+    mm_gt = [dataset.skeleton.transform_to_metric_space(gt) for gt in mm_gt] if mm_gt is not None else None
     # batch_size, n_samples, n_diffusion_steps, seq_length, num_joints, features = pred.shape
     assert features == 3 and list(target.shape) == [batch_size, seq_length, num_joints, features]
     return target, pred, lat_pred, mm_gt
