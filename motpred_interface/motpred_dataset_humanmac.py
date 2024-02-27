@@ -35,6 +35,8 @@ class HumanMacDataset(MotionDataset):
         data = np.concatenate([obs, pred], axis=-3)
         # data = self.preprocess_kpts(data) # we don't need to preprocess the keypoints, it is done by the skeleton class when calling tranform_to_input_space.
         obs, pred = data[..., :obs.shape[-3], :, :], data[..., obs.shape[-3]:, :, :]
+        # if self.if_load_mmgt:
+        #     extra["mm_gt"] =  [self.preprocess_kpts(np.concatenate([obs, gt], axis=-3))[..., obs.shape[-3]:, :, :] for gt in extra["mm_gt"]] # if you are not using our skeleton: run preprocess_kpts() on the gt
         return obs, pred, extra
 
     '''
