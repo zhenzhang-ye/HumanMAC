@@ -79,13 +79,13 @@ def compute_metrics(dataset_split, store_folder, batch_size, multimodal_threshol
         with torch.no_grad():
             data, target, extra = batch
             pred_dict = get_prediction(data, model, num_samples=num_samples, extra=extra, config=config) # [batch_size, n_samples, seq_length, num_joints, features]
-            target, pred, lat_pred, mm_gt = process_evaluation_pair(dataset, target=target, pred_dict=pred_dict)
+            target, pred, lat_pred, mm_gt = process_evaluation_pair(dataset, target=target, pred_dict={**pred_dict, 'obs': data})
             if metrics_at_cpu:
                 pred = pred.detach().cpu()
                 target = target.detach().cpu()
                 lat_pred = lat_pred.detach().cpu()
             return {'pred':pred, 'target':target, 'lat_pred':lat_pred, 
-                    'extra':extra, 'limbseq': dataset.skeleton.limbseq, 'mm_gt': mm_gt}
+                    'extra':extra, 'limbseq': dataset.skeleton.limbseq, 'mm_gt': mm_gt, 'obs': data}
     
     def extract_step(xdict, funct, step=0):
         assert step == 0, "Turned off. Only interesting to look intermediate diffusion outputs for generic diffusion methods. Output of method has to match. [batch, n_samples, n_diffusion_steps, pred_length, njoints, 3]"

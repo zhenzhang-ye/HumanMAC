@@ -121,13 +121,14 @@ def process_evaluation_pair(dataset, target, pred_dict):
     Process the target and the prediction and return them in the right format for metrics computation
     """
     ...
-    pred, lat_pred, mm_gt = pred_dict['pred'], pred_dict['lat_pred'], pred_dict['mm_gt']# example
+    pred, lat_pred, mm_gt, obs = pred_dict['pred'], pred_dict['lat_pred'], pred_dict['mm_gt'], pred_dict['obs']# example
     batch_size, n_samples, seq_length, num_joints, features = pred.shape
     target = dataset.skeleton.transform_to_metric_space(target)
     pred = dataset.skeleton.transform_to_metric_space(pred)
+    obs = dataset.skeleton.transform_to_metric_space(obs)
     mm_gt = [dataset.skeleton.transform_to_metric_space(gt) for gt in mm_gt] if mm_gt is not None else None
     # batch_size, n_samples, n_diffusion_steps, seq_length, num_joints, features = pred.shape
     assert features == 3 and list(target.shape) == [batch_size, seq_length, num_joints, features]
-    return target, pred, lat_pred, mm_gt
+    return target, pred, lat_pred, mm_gt, obs
     
     
