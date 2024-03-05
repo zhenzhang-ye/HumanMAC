@@ -31,13 +31,14 @@ class HumanMacDataset(MotionDataset):
     #     return seq
 
     def get_segment_from_dataset(self, idx):
-        obs, pred, extra = super(HumanMacDataset, self).get_segment_from_dataset(idx) 
-        data = np.concatenate([obs, pred], axis=-3)
+        #obs, pred, extra = super(HumanMacDataset, self).get_segment_from_dataset(idx) 
+        #data = np.concatenate([obs, pred], axis=-3)
         # data = self.preprocess_kpts(data) # we don't need to preprocess the keypoints, it is done by the skeleton class when calling tranform_to_input_space.
-        obs, pred = data[..., :obs.shape[-3], :, :], data[..., obs.shape[-3]:, :, :]
+        #obs, pred = data[..., :obs.shape[-3], :, :], data[..., obs.shape[-3]:, :, :]
         # if self.if_load_mmgt:
         #     extra["mm_gt"] =  [self.preprocess_kpts(np.concatenate([obs, gt], axis=-3))[..., obs.shape[-3]:, :, :] for gt in extra["mm_gt"]] # if you are not using our skeleton: run preprocess_kpts() on the gt
-        return obs, pred, extra
+        return super(HumanMacDataset, self).get_segment_from_dataset(idx) #obs, pred, extra
+        #return obs, pred, extra
 
     '''
     def __getitem__(self, idx):

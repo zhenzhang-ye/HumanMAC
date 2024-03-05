@@ -46,7 +46,7 @@ def train(cfg):
 
     data_loader_name = "data_loader_train"
     valid_loader_name = "data_loader_valid"
-    data_loader, dataset = create_train_dataset(batch_size=cfg['batch_size'], data_loader_name=data_loader_name, num_workers=0, 
+    data_loader, dataset = create_train_dataset(data_loader_name=data_loader_name, num_workers=0, 
                                                  shuffle=True, drop_last=False, **cfg)
     # data_loader, dataset = prepare_eval_dataset(cfg, 
     #                                             data_loader_name=data_loader_name, 

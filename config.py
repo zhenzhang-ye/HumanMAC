@@ -93,8 +93,15 @@ class Config:
 
         # indirect variable
         if self.dataset == 'h36m':
-            self.joint_num = 16
+            if cfg['skeleton_type'] == 'SkeletonRescaleHipCenterPose' or cfg['skeleton_type'] == 'SkeletonRawHipCenterPose':
+                self.joint_num = 25
+            else:
+                self.joint_num = 16
         elif self.dataset == 'freeman':
-            self.joint_num = 17
+            if cfg['skeleton_type'] == 'SkeletonRescaleHipCenterPose' or cfg['skeleton_type'] == 'SkeletonRawHipCenterPose':
+                self.joint_num = 18
+            else:
+                self.joint_num = 17
+
         self.idx_pad, self.zero_index = generate_pad(self.padding, self.t_his, self.t_pred)
         self.model_mode = cfg['model_mode']

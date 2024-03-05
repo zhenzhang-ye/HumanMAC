@@ -7,7 +7,7 @@ hydra:
 
 checkpoint_path: 'output'
 defaults:
-  - task: hmp
+  - task: motpred
   - method_specs: HumanMac # motion must go on - ours
   - dataset: freeman
   - override hydra/hydra_logging: disabled  
@@ -17,14 +17,14 @@ method_name: ${method_specs.method_name}
 dtype: float32
 
 mode: stats # 'vis: visualize results\ngen: generate and store all visualizations for a single batch\nstats: launch numeric evaluation')
-stats_mode: probabilistic 
+stats_mode: probabilistic
 batch_size: 512
 multimodal_threshold: 0.5
 metrics_at_cpu: False
 n_gpu: 1
 num_samples: 50
 seed: 0
-dataset_split: train
+dataset_split: test
 # pred_length: None # in the future we may want to change this
 silent: False
 

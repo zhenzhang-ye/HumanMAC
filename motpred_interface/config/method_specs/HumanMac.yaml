@@ -1,6 +1,8 @@
-skeleton_type: "SkeletonCenterPoseAlignSeqStart" # 
+skeleton_type: "SkeletonRawHipCenterPose" # 
+seq_centering: -2
+hip_box_size: 3.5
 method_name: HumanMac
-ckpt_path: 'checkpoints'
+ckpt_path: 'checkpoints/freeman_raw.pt'
 dataset: ${dataset.dataset_name}
 seed: 0
 method_batch_size: ${batch_size}
