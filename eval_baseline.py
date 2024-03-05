@@ -79,7 +79,7 @@ def compute_metrics(dataset_split, store_folder, batch_size, multimodal_threshol
         with torch.no_grad():
             data, target, extra = batch
             pred_dict = get_prediction(data, model, num_samples=num_samples, extra=extra, config=config) # [batch_size, n_samples, seq_length, num_joints, features]
-            target, pred, lat_pred, mm_gt = process_evaluation_pair(dataset, target=target, pred_dict={**pred_dict, 'obs': data})
+            target, pred, lat_pred, mm_gt, data = process_evaluation_pair(dataset, target=target, pred_dict={**pred_dict, 'obs': data})
             if metrics_at_cpu:
                 pred = pred.detach().cpu()
                 target = target.detach().cpu()
