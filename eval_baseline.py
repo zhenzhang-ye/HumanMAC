@@ -16,7 +16,7 @@ from motpred_eval.motpred.utils.reproducibility import set_seed
 from motpred_eval.motpred.metrics.utils import draw_table
 from motpred_eval.motpred.metrics.multimodal import MetricStorer
 from motpred_eval.motpred.utils.config import merge_cfg
-from motpred_eval.motpred.eval_utils import get_stats_funcs, store_results_for_multiple_diffusion_steps, get_cmd_storer, prepare_eval_dataset
+from motpred_eval.motpred.eval_utils import get_stats_funcs, store_results_for_multiple_diffusion_steps, get_cmd_storer, prepare_eval_dataset, get_apdLLfiltered_storer
 
 NDEBUG = False
 USE_HYDRA = True
@@ -109,6 +109,14 @@ def compute_metrics(dataset_split, store_folder, batch_size, multimodal_threshol
     for name, metric in stats_metrics.items():
         metric.attach(engine, name)
         
+    if  stats_mode == 'll_robustness':
+        apdLL_storer = get_apdLLfiltered_storer(**config)
+        apdLL_metrics = {metric_name + f'_step{step}': storerclass(output_transform=partial(extract_step, funct=out_funct, step=s)) 
+                            for metric_name, (storerclass, out_funct) in apdLL_storer.items() 
+                            for s,step in enumerate(steps_to_evaluate)}
+        for name, metric in apdLL_metrics.items():
+            metric.attach(engine, name)
+        
     if dataset_split=='test':
         config.pop('dataset')
         cmd_storer = get_cmd_storer(data_loader.dataset, **config)
@@ -140,7 +148,10 @@ def compute_metrics(dataset_split, store_folder, batch_size, multimodal_threshol
     for stats in results:
         if stats.replace("traj", "").replace("pose", "") not in ['MPJPE', 'ADE', 'FDE', 'APD', 'MMADE', 'MMFDE']:
             if stats.replace("_max", "").replace("_mean", "").replace("_min", "") not in ['LLErr', 'LLErr_wrtGT', 'LLErr_diffGT', 'LLErr_GT']:
-                print(f'Total {stats}: {results[stats]:.4f}')
+                if isinstance(results[stats], list) or isinstance(results[stats], np.ndarray):
+                    print(f'Total {stats}: ', results[stats])
+                else: 
+                    print(f'Total {stats}: {results[stats]:.4f}')
     print('=' * 80)  
     # ----------------------------- Storing overall results -----------------------------
     
