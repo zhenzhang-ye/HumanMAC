@@ -148,7 +148,7 @@ def compute_metrics(dataset_split, store_folder, batch_size, multimodal_threshol
     for stats in results:
         if stats.replace("traj", "").replace("pose", "") not in ['MPJPE', 'ADE', 'FDE', 'APD', 'MMADE', 'MMFDE']:
             if stats.replace("_max", "").replace("_mean", "").replace("_min", "") not in ['LLErr', 'LLErr_wrtGT', 'LLErr_diffGT', 'LLErr_GT']:
-                if isinstance(results[stats], list) or isinstance(results[stats], np.ndarray):
+                if isinstance(results[stats], list) or isinstance(results[stats], np.ndarray) or isinstance(results[stats], tuple):
                     print(f'Total {stats}: ', results[stats])
                 else: 
                     print(f'Total {stats}: {results[stats]:.4f}')
