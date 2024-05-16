@@ -110,7 +110,7 @@ def compute_metrics(dataset_split, store_folder, batch_size, multimodal_threshol
         metric.attach(engine, name)
         
     if  stats_mode == 'll_robustness':
-        apdLL_storer = get_apdLLfiltered_storer(**config)
+        apdLL_storer, ll_thresholds = get_apdLLfiltered_storer(**config)
         apdLL_metrics = {metric_name + f'_step{step}': storerclass(output_transform=partial(extract_step, funct=out_funct, step=s)) 
                             for metric_name, (storerclass, out_funct) in apdLL_storer.items() 
                             for s,step in enumerate(steps_to_evaluate)}
@@ -134,7 +134,21 @@ def compute_metrics(dataset_split, store_folder, batch_size, multimodal_threshol
     # store multiple steps of metrics
     if len(steps_to_evaluate)>1:
         store_results_for_multiple_diffusion_steps()
-    
+        
+    array_results = {}
+    if  stats_mode == 'll_robustness':
+        for results_key in list(results.keys()):
+            if 'DivLL' in results_key:
+                apd_vals = results[results_key][0]
+                num_valid_samp = results[results_key][1]
+                for i, val in enumerate(apd_vals):
+                    results[results_key+'_samples%_'+"@"+str(ll_thresholds[i])] = num_valid_samp[i]
+                    results[results_key+"@"+str(ll_thresholds[i])] = val
+                if f'_step{steps_to_evaluate[-1]}' in results_key:
+                    name = results_key.replace(f'_step{steps_to_evaluate[-1]}', '')
+                array_results[name] = apd_vals
+                array_results[name+'_samples%_'] = num_valid_samp
+                results.pop(results_key)
     # make latest step results the final one
     for name in list(results.keys()):
         if f'_step{steps_to_evaluate[-1]}' in name:
@@ -156,10 +170,14 @@ def compute_metrics(dataset_split, store_folder, batch_size, multimodal_threshol
     # ----------------------------- Storing overall results -----------------------------
     
     # write results as json in plots folder
-    ov_path = os.path.join(store_folder, f"results_{num_samples}.json")
+    ov_path = os.path.join(store_folder, f"results_{num_samples}_{stats_mode}.yaml")
     with open(ov_path, "w") as f:
-        json.dump(str(results), f, indent=4)
-
+        # json.dump(str(results), f, indent=4)
+        yaml.dump(results, f, indent=4)
+    if stats_mode == 'll_robustness':
+        ov_path = os.path.join(store_folder, f"results_{num_samples}_{stats_mode}_asarray.json")
+        with open(ov_path, "w") as f:
+            json.dump(str(array_results), f, indent=4)
     print(f"Overall results saved to {ov_path}")
     print('=' * 80)  
   
