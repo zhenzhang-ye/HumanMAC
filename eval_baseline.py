@@ -34,7 +34,10 @@ def get_steps_to_evaluate(diffusion_stride, diffusion_steps):
 
 def compute_metrics(dataset_split, store_folder, batch_size, multimodal_threshold=0.5, num_samples=50, 
                         prepare_model=None, get_prediction=None, process_evaluation_pair=None, set_updataset=None, 
-                        silent=False, stats_mode="no_mm", metrics_at_cpu=False, **config):
+                        silent=False, stats_mode="no_mm", metrics_at_cpu=False, 
+                        if_store_output=False,
+                        store_output_path=None,
+                        **config):
                 
     torch.set_default_dtype(torch.float64 if config["dtype"]== "float64" else torch.float32)
 
@@ -48,8 +51,15 @@ def compute_metrics(dataset_split, store_folder, batch_size, multimodal_threshol
     # for non diffusion methods, steps_to_evaluate = [1]
     steps_to_evaluate = [1] # get_steps_to_evaluate(diffusion_stride, diffusion_steps=num_timesteps) # for example [10], where last value is last diffusion timestep. 
     # steps_toenumerate = tqdm(range(len(steps_to_evaluate))) 
-    print('Computing metrics at ', 'cpu.' if metrics_at_cpu else 'gpu.')
-    
+    print('Computing metrics at ', 'cpu.' if metrics_at_cpu else 'gpu.')    
+    if if_store_output:
+        import zarr
+        print(f"Storing output at {store_output_path}: ", len(data_loader.dataset), 'segments')
+        os.makedirs(store_output_path, exist_ok=True)
+        store_output_path = os.path.join(store_output_path, 'output.zarr')
+        output_poses = zarr.open(store_output_path, mode='w', shape=(0, num_samples, config['pred_length'], config['num_joints'] - int(not dataloader.dataset.skeleton.if_consider_hip),  3), 
+                                 chunks=(1000, num_samples, config['pred_length'], config['num_joints'] - int(not dataloader.dataset.skeleton.if_consider_hip), 3), dtype=np.float32)
+
     def preprocess(engine: Engine):
         def mmgt_to_device(extradict):
             if 'mm_gt' in extradict:
@@ -80,6 +90,8 @@ def compute_metrics(dataset_split, store_folder, batch_size, multimodal_threshol
             data, target, extra = batch
             pred_dict = get_prediction(data, model, num_samples=num_samples, extra=extra, config=config) # [batch_size, n_samples, seq_length, num_joints, features]
             target, pred, lat_pred, mm_gt, data = process_evaluation_pair(dataset, target=target, pred_dict={**pred_dict, 'obs': data})
+            if if_store_output:
+                output_poses.append(pred.cpu().numpy(), axis=0)
             if metrics_at_cpu:
                 pred = pred.detach().cpu()
                 target = target.detach().cpu()
