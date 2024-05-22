@@ -17,7 +17,7 @@ method_name: ${method_specs.method_name}
 dtype: float32
 
 mode: stats # 'vis: visualize results\ngen: generate and store all visualizations for a single batch\nstats: launch numeric evaluation')
-stats_mode: probabilistic
+stats_mode: deterministic
 batch_size: 512
 multimodal_threshold: 0.5
 metrics_at_cpu: False
